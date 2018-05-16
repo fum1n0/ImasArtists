@@ -26,17 +26,20 @@ def load_artistlist(artists_path):
         header = next(reader)
         idol_names = []
         va_names = []
+
         for row in reader:
             idol_names.append(row[0])
             va_names.append(row[1])
 
+    dict_idol_va = {}
     artist_names = []
     for i in range(min(len(idol_names), len(va_names))):
+        idol_names[i] = idol_names[i].replace(' ', '')
+        va_names[i] = va_names[i].replace(' ', '')
+        dict_idol_va.update({idol_names[i]: va_names[i]})
         artist_names.append('{}(CV:{})'.format(idol_names[i], va_names[i]))
-        idol_names[i].replace(' ', '')
-        artist_names[i].replace(' ', '')
 
-    return idol_names, artist_names
+    return idol_names, artist_names, dict_idol_va
 
 
 def load_unitslist(units_path):
@@ -45,11 +48,14 @@ def load_unitslist(units_path):
         header = next(reader)
         units_dict = {}
         for row in reader:
+            for i in range(1, len(row)):
+                row[i] = row[i].replace(' ', '')
             units_dict.update({row[0]: row[1:]})
+
     return units_dict
 
 
-def is_unit(unit_dict, artists):
+def is_unit(unit_dict, artists, dict_idol_va):
     for key in unit_dict.keys():
         flag = True
         for unit_idol in unit_dict[key]:
@@ -58,7 +64,8 @@ def is_unit(unit_dict, artists):
         if flag:
             name = key + "["
             for unit_idol in unit_dict[key]:
-                name = name + unit_idol + ", "
+                name = '{}{}(CV:{}), '.format(
+                    name, unit_idol, dict_idol_va[unit_idol])
             name = name[:-2] + "]"
             return flag, name
 
@@ -74,7 +81,7 @@ def load_flaclist(flac_dir):
 
 if __name__ == '__main__':
 
-    idol_names, artist_names = load_artistlist(args.idol_path)
+    idol_names, artist_names, dict_idol_va = load_artistlist(args.idol_path)
     unit_dict = load_unitslist(args.units_path)
     flac_paths = load_flaclist(args.flac_dir)
 
@@ -92,7 +99,7 @@ if __name__ == '__main__':
             for artist in artists:
                 name = '{}, {}'.format(name, artist)
             name = name[2:]
-            flag, unit_name = is_unit(unit_dict, name)
+            flag, unit_name = is_unit(unit_dict, name, dict_idol_va)
             if flag:
                 name = unit_name
 
